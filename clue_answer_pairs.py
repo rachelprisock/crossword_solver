@@ -1,29 +1,3 @@
-# pseudo code this shit
-
-# open the page http://www.xwordinfo.com/xml/Crossword/
-# if <dir> open url (ex. http://www.xwordinfo.com/xml/Crossword/1942/)
-#####now we're in the url for the year
-# if .xml, store in item (all_years)
-# else do nothing
-
-##now we've parsed through the years and gained the .xml files for all years
-
-# for each year in all_years
-# parse clue, answer into all_pairs item
-
-
-##from here, we have gained all clues and we can start to manipulate the data to structure it into a dictionary
-##where the clue is the key and the answer or answers are a list that are the value of the key clue
-
-
-# from bs4 import BeautifulSoup
-# from urllib.request import urlopen
-#
-# html = urlopen("http://www.xwordinfo.com/xml/Crossword/")
-# html_doc = html.read()
-# #should specify what type of parser, in BeautifulSoup docs, they use 'html.parser' and terminal is using "lxml"
-# soup = BeautifulSoup(html_doc)
-
 from bs4 import BeautifulSoup
 import requests
 import xml.etree.ElementTree
@@ -36,6 +10,9 @@ home_links = soup.find_all('a')
 year_links = []
 month_links = []
 xml_links = []
+clue_list = []
+answer_list = []
+clue_answer_pairs = {}
 
 # This block gets a list called year_links with includes all links to different years of crossword puzzles
 print('Init home links \n')
@@ -64,16 +41,11 @@ for set in month_links:
         elif month.startswith('/xml/Crossword/' + str(2)):
             month = 'http://www.xwordinfo.com' + month
             xml_links.append(month)
+        else:
+            print('Not writing parent directory link')
 
-
-
-## xml_links[0:5] = ['http://www.xwordinfo.com/xml/Crossword/1942/1942-01.xml', 'http://www.xwordinfo.com/xml/Crossword/1942/1942-02.xml', 'http://www.xwordinfo.com/xml/Crossword/1942/1942-03.xml', 'http://www.xwordinfo.com/xml/Crossword/1942/1942-04.xml', 'http://www.xwordinfo.com/xml/Crossword/1942/1942-05.xml']
-
-clue_answer_pairs = {}
-
-print(xml_links)
-exit()
-
+# This block iterates through the xml_links list and populates a
+# dictionary of clue_answer_pairs from all years and all months
 print('Init xml links')
 for url in xml_links:
     link_content = requests.get(url).content
@@ -86,21 +58,29 @@ for url in xml_links:
                     ans = child.get('Ans')
                     clue_answer_pairs[clue] = ans
 
-                    # Could always create another loop for if clue in clue_answer_pairs update ans to a list of itself and the previous asnwer
-                    # don't know if I will have to go find the record where clue == clue and update ans
 
-                    ######### REFACTOR #########
-                    # Trying out xml parsing with one file
-                    # blah = requests.get('http://www.xwordinfo.com/xml/Crossword/2015/2015-01.xml')
-                    # msg = blah.content
-                    # tree = xml.etree.ElementTree.fromstring(msg)
-                    # clue_answer_pairs = {}
-                    # # And this set goes through the tree and creates a dictionary of clue answer pairs
-                    # for child in tree:
-                    #     for child in child:
-                    #         if child.tag == 'Clues':
-                    #             for child in child:
-                    #                 clue = child.text
-                    #                 ans = child.get('Ans')
-                    #                 clue_answer_pairs[clue] = ans
-                    # print(clue_answer_pairs)
+# This file parses the xml links on xwordinfo to gather a dictionary of clue answer pairs
+# To Do:
+    # When a clue appears multiple times, need to add a column to enumerate
+        # the number of occurances of that clue
+    # If a clue appears multiple times, add answer to array corresponding to clue
+    # ex. [[{ apple: [ red, aday, worm]}], [3]]
+        # clue_answer_table = [[{ clue: [ans, ans, ans, ans]}], [times_clue_appeared]]
+    # make into useful methods to set up for creating answer table and clue table
+    # refactor xml_links loop, messy structure.
+
+######### One File Test #########
+# Trying out xml parsing with one file
+# clue_answer_pairs = {}# blah = requests.get('http://www.xwordinfo.com/xml/Crossword/2015/2015-01.xml')
+# msg = blah.content
+# tree = xml.etree.ElementTree.fromstring(msg)
+# clue_answer_pairs = {}
+# # And this set goes through the tree and creates a dictionary of clue answer pairs
+# for child in tree:
+#     for child in child:
+#         if child.tag == 'Clues':
+#             for child in child:
+#                 clue = child.text
+#                 ans = child.get('Ans')
+#                 clue_answer_pairs[clue] = ans
+# print(clue_answer_pairs)
