@@ -5,12 +5,15 @@
 from bs4 import BeautifulSoup
 import requests
 
-class RawXmlDataLinks:
+class RawXmlData:
+    def __init__(self):
+        self.gather_xml_data()
 
     # This block gets a list called year_links with includes all links to
     # different years of crossword puzzles
-    def gather_xml_data(link):
-        home = requests.get(link).content
+    def gather_xml_data(self):
+        homepage = 'http://www.xwordinfo.com/xml/Crossword/'
+        home = requests. get(homepage).content
         soup = BeautifulSoup(home, 'html.parser')
         home_a_tags = soup.find_all('a')
         year_links = []
@@ -51,5 +54,4 @@ class RawXmlDataLinks:
                 else:
                     print('Added links for ' + str(year_count))
                     year_count += 1
-
-    gather_xml_data('http://www.xwordinfo.com/xml/Crossword/')
+        self.xml_links = xml_links
