@@ -7,8 +7,8 @@ import pandas as pd
 class Lists(RawXmlData):
     def __init__(self):
         RawXmlData.__init__(self)
-        self.create_answer_list()
-        self.create_clue_list()
+        # self.create_answer_list()
+        # self.create_clue_list()
         self.create_clue_answer_list()
 
     ## This method creates a csv of clues and number of times they appear to clue_list.csv
@@ -24,7 +24,7 @@ class Lists(RawXmlData):
                     if child.tag == 'Clues':
                         for child in child:
                             clue = str(child.text)
-                            clue = clue.strip('.').lower()
+                            clue = clue.replace('.', '').lower()
                             if clue not in clue_list:
                                 clue_list[clue] = 0
                             elif clue in clue_list:
@@ -45,7 +45,7 @@ class Lists(RawXmlData):
                 for child in child:
                     if child.tag == 'Clues':
                         for child in child:
-                            ans = child.get('Ans').strip('.').lower()
+                            ans = child.get('Ans').replace('.', '').lower()
                             if ans not in answer_list:
                                 answer_list[ans] = 0
                             elif ans in answer_list:
@@ -68,13 +68,19 @@ class Lists(RawXmlData):
                     if child.tag == 'Clues':
                         for child in child:
                             clue = str(child.text)
-                            clue = clue.strip('.').lower()
-                            ans = child.get('Ans').strip('.').lower()
+                            clue = clue.replace('.', '').lower()
+                            ans = child.get('Ans').replace('.', '').lower()
                             clue_answer_pairs.setdefault(clue, [])
                             clue_answer_pairs[clue].append(ans)
-        clue_answer_series = pd.Series(clue_answer_pairs, name='Answers')
-        clue_answer_series.index.name= 'Clue'
-        clue_answer_pairs.reset_index()
-        clue_answer_series.to_csv('clue_answer_list.csv', header=True)
+        clue_answer_df = pd.DataFrame(list(sorted(clue_answer_pairs.items())), columns=['clue', 'answers'])
+
+        times_appeared = []
+        for answer in clue_answer_df['answers']:
+            times_appeared.append(len(answer))
+
+        clue_answer_df['times_appeared'] = pd.Series(times_appeared, index=clue_answer_df.index)
+        print(clue_answer_df)
+
+        clue_answer_df.to_csv('data_clue_answer_count.csv')
 
 new = Lists()
