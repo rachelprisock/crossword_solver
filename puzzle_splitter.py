@@ -1,3 +1,23 @@
+############ CURRENT STATE ###############
+# Takes in a single .puz file
+# Parses through the file to get clues and answers
+# Use this to make a dataframe of clues, answers,
+# and answer lengths
+# Also creates a dataframe that is sent to the
+# dictionary scraper to assist in gathering clue
+# answer candidates
+# Runs from one method =P
+# Can easily be imported into another file or class
+# to be commanded from one place
+
+
+################ TO DO: ##################
+# 1. Make this useful for multiple .puz files
+#    For testing, will have to gather a lot of
+#    .puz files and parse them all through here
+# 2. Find more .puz files, decide if I will be
+#    using 2015 puzzles or not
+
 from crossword import Crossword
 import crossword
 import puz

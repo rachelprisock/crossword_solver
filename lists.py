@@ -1,5 +1,21 @@
-import xml.etree.ElementTree
+############ CURRENT STATE ###############
+# prints a clue answer document out to csv
+# including how many times the clue has appeared
 
+################ TO DO: ##################
+# 1. Clean up the data, there were some empty cells
+# 2. Some rows also have duplicate rows so adding
+#    to dict may not be working quite as planned
+# 3. Add clue and answer separate arrays to be
+#    included in new single method
+# 4. Add this data to a database in order to build
+#    database module in neural network
+# 5. Decide if I want to use 2015 data, in order
+#    to have an easier to find test set of .puz
+#    files.
+
+
+import xml.etree.ElementTree
 import pandas as pd
 import requests
 

@@ -1,3 +1,17 @@
+############ CURRENT STATE ###############
+# Takes in the list of clue and answer_length
+# from puzzle_splitter and queries each of those
+# clue: answer_length pairs and parses the list of
+# results which comprise of answer and confidence
+
+
+################ TO DO: ##################
+# 1. Something super funky is happening with my
+#    clue and answer lists, I'm not even sure
+#    if this is the best method, will revisit
+#    tomorrow when rejuvinated
+# 2. Refactor, that search_clue method is a beast
+
 import re
 import lxml
 from robobrowser import RoboBrowser
