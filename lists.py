@@ -1,83 +1,34 @@
 ############ CURRENT STATE ###############
-# prints a clue answer document out to csv
-# including how many times the clue has appeared
+# returns df of clue, answer and answer probability
+# to be sent to db_module
 
 ################ TO DO: ##################
-# 1. Clean up the data, there were some empty cells
-# 2. Some rows also have duplicate rows so adding
-#    to dict may not be working quite as planned
-# 3. Add clue and answer separate arrays to be
-#    included in new single method
-# 4. Add this data to a database in order to build
-#    database module in neural network
-# 5. Decide if I want to use 2015 data, in order
-#    to have an easier to find test set of .puz
-#    files.
+# 1. Could be refactored a bit, got a bit messy in
+#    attempting to format data
 
 
 import xml.etree.ElementTree
 import pandas as pd
 import requests
-
 from raw_xml_data import RawXmlData
-
 
 class Lists(RawXmlData):
     def __init__(self):
         RawXmlData.__init__(self)
-        # self.create_answer_list()
-        # self.create_clue_list()
-        self.create_clue_answer_list()
+        self.run_lists()
 
-    # ## This method creates a csv of clues and number of times they appear to clue_list.csv
-    # def create_clue_list(self):
-    #     clue_list = {}
-    #     print('Creating clue and appearance count document')
-    #     for url in self.xml_links:
-    #         link_content = requests.get(url).content
-    #         tree = xml.etree.ElementTree.fromstring(link_content)
-    #         print('Parsing url: ' + url)
-    #         for child in tree:
-    #             for child in child:
-    #                 if child.tag == 'Clues':
-    #                     for child in child:
-    #                         clue = str(child.text)
-    #                         clue = clue.replace('.', '').lower()
-    #                         if clue not in clue_list:
-    #                             clue_list[clue] = 0
-    #                         elif clue in clue_list:
-    #                             clue_list[clue] += 1
-    #     clue_series = pd.Series(clue_list, name='TimesSeen')
-    #     clue_series.index.name= 'Clue'
-    #     clue_series.reset_index()
-    #     clue_series.to_csv('clue_list.csv', header=True)
-    # ## This method creates a csv of answers and number of times they appear called answer_list.csv
-    # def create_answer_list(self):
-    #     answer_list = {}
-    #     print('Creating answer and appearance count document')
-    #     for url in self.xml_links:
-    #         link_content = requests.get(url).content
-    #         tree = xml.etree.ElementTree.fromstring(link_content)
-    #         print('Parsing url: ' + url)
-    #         for child in tree:
-    #             for child in child:
-    #                 if child.tag == 'Clues':
-    #                     for child in child:
-    #                         ans = child.get('Ans').replace('.', '').lower()
-    #                         if ans not in answer_list:
-    #                             answer_list[ans] = 0
-    #                         elif ans in answer_list:
-    #                             answer_list[ans] += 1
-    #     answer_series = pd.Series(answer_list, name='TimesSeen')
-    #     answer_series.index.name= 'Answer'
-    #     answer_series.reset_index()
-    #     answer_series.to_csv('answer_list.csv', header=True)
-    ## This method creates a csv of clue-answer pairs clue_answer_list.csv
-    def create_clue_answer_list(self):
-        global clue_answer_pairs
-        clue_answer_pairs = {}
-        print('Creating clue answer document')
-        for url in self.xml_links[0:2]:
+    def run_lists(self):
+        self.clue_answer()
+        self.clue_answer_count()
+        self.clue_count()
+        self.clue_answer_probability()
+        self.final_clue_answer_probability_list()
+
+    def clue_answer(self):
+        global clue_answer_list
+        clue_answer_list = []
+        clue_answer_row = []
+        for url in self.xml_links[100:101]:
             link_content = requests.get(url).content
             tree = xml.etree.ElementTree.fromstring(link_content)
             print('Parsing url: ' + url)
@@ -87,20 +38,85 @@ class Lists(RawXmlData):
                         for child in child:
                             clue = str(child.text)
                             clue = clue.replace('.', '').lower()
-                            ans = child.get('Ans').replace('.', '').lower()
-                            clue_answer_pairs.setdefault(clue, [])
-                            clue_answer_pairs[clue].append(ans)
-        clue_answer_df = pd.DataFrame(list(sorted(clue_answer_pairs.items())), columns=['clue', 'answers'])
-        times_appeared = []
-        for answer in clue_answer_df['answers']:
-            times_appeared.append(len(answer))
-        clue_answer_df['times_appeared'] = pd.Series(times_appeared, index=clue_answer_df.index)
-        print(clue_answer_df)
+                            clue_answer_row.append(clue)
+                            answer = child.get('Ans').replace('.', '').lower()
+                            clue_answer_row.append(answer)
+                            clue_answer_list.append(clue_answer_row)
+                            clue_answer_row = []
 
-        clue_df = pd.DataFrame()
-        clue_df['clue'] = clue_answer_df['clue']
-        print(clue_df)
+    def clue_answer_count(self):
+        global final_clue_answer_count_list
+        clue_answer_count = []
+        clue_answer_count_row = []
+        final_clue_answer_count_list = []
+        x = len(clue_answer_list) - 1
+        while x >= 0:
+            clue_answer_count_row.append(clue_answer_list[x])
+            clue_answer_count_row.append(clue_answer_list.count(clue_answer_list[x]))
+            clue_answer_count.append(clue_answer_count_row)
+            clue_answer_count_row = []
+            x = x - 1
+        for i in clue_answer_count:
+            if i not in final_clue_answer_count_list:
+                final_clue_answer_count_list.append(i)
 
-        # clue_answer_df.to_csv('data_clue_answer_count.csv')
+    def clue_count(self):
+        global final_clue_count_list
+        clue_list = []
+        clue_count_row = []
+        clue_count_list = []
+        final_clue_count_list = []
+        for row in clue_answer_list:
+            clue_list.append(row[0])
+        x = len(clue_list)  - 1
+        while x >= 0:
+            clue_count_row.append(clue_list[x])
+            clue_count_row.append(clue_list.count(clue_list[x]))
+            clue_count_list.append(clue_count_row)
+            clue_count_row = []
+            x = x - 1
+        for i in clue_count_list:
+            if i not in final_clue_count_list:
+                final_clue_count_list.append(i)
 
-new = Lists()
+    def clue_answer_probability(self):
+        global clue_answer_probability_list
+        clue_answer_seen_list = []
+        clue_answer_seen_row = []
+        for row in final_clue_answer_count_list:
+            clue_answer_seen_row.append(row[0][0])
+            clue_answer_seen_row.append(row[1])
+            clue_answer_seen_list.append(clue_answer_seen_row)
+            clue_answer_seen_row = []
+
+        clue_seen_total_list = []
+        for clue in final_clue_count_list:
+            clue_seen_total_list.append(clue[0])
+            clue_seen_total_list.append(clue[1])
+
+        clue_answer_probability_list = []
+        for pair in clue_answer_seen_list:
+            clue = pair[0]
+            clue_answer_count = pair[1]
+            target = clue_seen_total_list.index(pair[0])
+            clue_check = clue_seen_total_list[target]
+            target = target + 1
+            clue_seen_count = clue_seen_total_list[target]
+            clue_answer_probability = clue_answer_count / clue_seen_count
+            clue_answer_probability_list.append(clue_answer_probability)
+
+    def final_clue_answer_probability_list(self):
+        global clue_answer_df
+        clue_answer_list = []
+        clue_answer_row = []
+        for row in final_clue_answer_count_list:
+            clue_answer_row.append(row[0][0])
+            clue_answer_row.append(row[0][1])
+            clue_answer_list.append(clue_answer_row)
+            clue_answer_row = []
+        clue_answer_df = pd.DataFrame(clue_answer_list, columns=['clue', 'answer'])
+        clue_answer_df['answer_probability'] = pd.Series(clue_answer_probability_list, index=clue_answer_df.index)
+        self.clue_answer_df = clue_answer_df
+
+
+

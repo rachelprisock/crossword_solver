@@ -1,6 +1,5 @@
-## This file parses xwordinfo to ultimately pull a list off all
-## links to xml files, so a link to xml version of puzzles from
-## all available years and all available months
+################ TO DO: ##################
+# 1. Decide if I will be using 2015 data or not
 
 from bs4 import BeautifulSoup
 import requests
