@@ -1,16 +1,11 @@
-############ CURRENT STATE ###############
+############# CURRENT STATE ################
 # Takes in the list of clue and answer_length
-# from puzzle_splitter and queries each of those
-# clue: answer_length pairs and parses the list of
+# from puzzle_splitter
+# Queries each of those pairs and parses the list of
 # results which comprise of answer and confidence
-
-
-################ TO DO: ##################
-# 1. Something super funky is happening with my
-#    clue and answer lists, I'm not even sure
-#    if this is the best method, will revisit
-#    tomorrow when rejuvinated
-# 2. Refactor, that search_clue method is a beast
+# Returns df of all scraped answers and confidence
+# in relation to each clue and answer length
+# to be send to the Candidate compiler
 
 import re
 import lxml
@@ -25,12 +20,7 @@ class DictionaryScraper(PuzzleSplitter):
         self.query_with_puzzle_clues()
 
     def search_clue(self):
-        global final_answer_list
-        global final_confidence_list
-        answer_list = []
-        answer_row = []
-        confidence_list = []
-        confidence_row = []
+        global count
         for row in self.clue_answer_length_array:
             clue = row[0]
             answer_length = row[1]
@@ -43,32 +33,40 @@ class DictionaryScraper(PuzzleSplitter):
             form['query'] = clue
             form['l'] = str(answer_length)
             browser.submit_form(form)
-            print('storing results')
-            all_answers = browser.find_all('div', attrs={'class': 'matching-answer'})
-            all_confidence = browser.find_all('div', attrs={'class': 'confidence'})
-            for answer in all_answers:
-                answer = answer.text
+            self.store_results()
+
+    def store_results(self):
+        answer_row = []
+        confidence_row = []
+        global count
+        print('storing results')
+        all_answers = browser.find_all('div', attrs={'class': 'matching-answer'})
+        all_confidence = browser.find_all('div', attrs={'class': 'confidence'})
+
+        if len(all_answers) == 0 and len(all_confidence) == 0:
+            answer_list.append(answer_row)
+            confidence_list.append(confidence_row)
+
+        for answer in all_answers:
+            answer = answer.text
+            if 'Matching Answer' not in answer:
                 answer = answer.replace(' ', '').replace('\n', '').lower()
                 answer_row.append(answer)
-                while 'matchinganswer' in answer_row: answer_row.remove('matchinganswer')
+            elif 'Matching Answer' in answer:
                 answer_list.append(answer_row)
-                final_answer_list = [x for x in answer_list if x != []]
-                answer_row = []
-            for confidence in all_confidence:
-                confidence = confidence.text
+
+        for confidence in all_confidence:
+            confidence = confidence.text
+            if 'Confidence' not in confidence:
                 confidence = confidence.replace('%', '').replace(' ', '').replace('\n', '')
                 confidence_row.append(confidence)
-                while 'Confidence' in confidence_row: confidence_row.remove('Confidence')
+            else:
                 confidence_list.append(confidence_row)
-                final_confidence_list = [x for x in confidence_list if x != []]
-                confidence_row = []
 
     def return_result_array(self):
-        print(final_answer_list)
-        print(final_confidence_list)
         all_answer_confidence_df = pd.DataFrame(self.clue_answer_length_array, columns=['clue', 'answer_length'])
-        all_answer_confidence_df['candidates'] = pd.Series(answer_confidence_dict, index=all_answer_confidence_df.index)
-        print(all_answer_confidence_df)
+        all_answer_confidence_df['candidates'] = pd.Series(answer_list, index=all_answer_confidence_df.index)
+        all_answer_confidence_df['confidence'] = pd.Series(confidence_list, index=all_answer_confidence_df.index)
 
     def scrape_dictionary(self):
         self.search_clue()
@@ -76,6 +74,10 @@ class DictionaryScraper(PuzzleSplitter):
 
     def query_with_puzzle_clues(self):
         global clue_answer_length_array
+        global answer_list
+        global confidence_list
+        answer_list = []
+        confidence_list = []
         clue_answer_length_row = []
         clue_answer_length_array = []
         for index, row in self.clue_answer_len_df.iterrows():
